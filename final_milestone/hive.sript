@@ -1,0 +1,34 @@
+create database tweet;
+use tweet;
+create table tweet_info(
+id string,
+user_id string,
+create_at string,
+source string)
+ROW FORMAT DELIMITED
+FIElDS TERMINATED BY '\t'
+STORED AS textfile;
+create table users(
+user_id string,
+screen_name string,
+create_at string,
+location string)
+ROW FORMAT DELIMITED
+FIElDS TERMINATED BY '\t'
+STORED AS textfile; 
+
+
+LOAD DATA LOCAL INPATH '/mnt/downloads/Tweet_info.tsv'
+OVERWRITE INTO TABLE tweet_info;
+
+LOAD DATA LOCAL INPATH '/mnt/downloads/User.tsv'
+OVERWRITE INTO TABLE users;
+
+
+set hive.exec.mode.auto.local=true;
+select count(*) from tweet_info;
+
+SELECT count(distinct(u.user_id)) from  tweet_info t right outer join users u  on u.user_id = t.user_id;
+
+SELECT count(*) from tweet_info t right outer join users u on u.user_id = t.user_id;
+

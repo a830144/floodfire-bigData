@@ -1,0 +1,46 @@
+create database YuChunChou;
+use yuchunchou;
+create table tweets
+( tweet_id  string,
+  user_id  string,
+  date  string,
+  source string,
+  text string )
+ROW FORMAT DELIMITED
+FIElDS TERMINATED BY '\t'
+STORED AS TEXTFILE; 
+
+create table users
+( user_id string,
+  screen_name string,
+  created_at date,
+  number_followers bigint)
+ROW FORMAT DELIMITED
+FIElDS TERMINATED BY '\t'
+STORED AS TEXTFILE;
+
+
+LOAD DATA LOCAL INPATH '/home/cloudera/Downloads/tweets.tsv'
+OVERWRITE INTO TABLE tweets;
+
+
+LOAD DATA LOCAL INPATH '/home/cloudera/Downloads/users.tsv'
+OVERWRITE INTO TABLE users;
+
+SELECT * FROM users sort by number_followers desc limit 10;
+
+SELECT count(distinct(u.user_id)) from users u join tweets t on u.user_id = t.user_id;
+
+SELECT max(date),min(date), max(date)-min(date) from tweets;
+
+
+CREATE TABLE output STORED AS
+    orc tblproperties ("orc.compress"="SNAPPY")
+AS
+select us.user_id,temp.count,us.number_followers
+FROM
+(select u.user_id as user_id,count(tweet_id) as count
+From users u join tweets t
+on u.user_id = t.user_id
+group by u.user_id) temp right outer join users us
+on temp.user_id = us.user_id;

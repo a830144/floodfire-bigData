@@ -1,0 +1,22 @@
+
+tweets= LOAD '/input-temp-tweets' using PigStorage('\t') as ( tweet_id:chararray,user_id:chararray,date:chararray,source:chararray,text:chararray);
+
+users= LOAD '/input-temp-users' using PigStorage('\t') as( user_id:chararray,screen_name:chararray,created_at:chararray,number_followers:long);
+
+users= order users by number_followers desc ;
+top_10 = limit users 10;
+
+user_tweet = join users by user_id,tweets by user_id;
+user_tweet_group = group user_tweet all;
+count_id = foreach user_tweet_group generate COUNT(user_tweet);
+
+tweet_group = group tweet all;
+max_date = foreach tweet_group generate max(date);
+min_date = foreach tweet_group generate min(date);
+range = max_date-min_date;
+
+user_tweet = join users by user_id,tweets by user_id;
+user_tweet_group = group user_tweet by users.user_id;
+counts = foreach user_tweet_group generate COUNT(user_tweet) as count,users.user_id;
+joinfinal = join users by user_id,counts by user_id;
+final = foreach joinfinal generate users.user_id,counts.count,users.number_followers;
